@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mars Simulation</title>
+
+<style>
+body {
+  margin: 0;
+  background: radial-gradient(circle at center, #1a0f0a, #000);
+  font-family: Arial, sans-serif;
+  color: white;
+  overflow: hidden;
+}
+
+header {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0;
+  color: #ff6a3d;
+}
+
+.controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+button, input {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #2b1a14;
+  color: white;
+}
+
+button:hover {
+  background: #ff6a3d;
+  cursor: pointer;
+}
+
+canvas {
+  display: block;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🪐 Mars Simulation</h1>
+  <div>Click to deploy rover markers</div>
+</header>
+
+<div class="controls">
+  <button onclick="toggleRotation()">Start/Stop Rotation</button>
+  <button onclick="clearRovers()">Clear Rovers</button>
+  <label>
+    Speed
+    <input type="range" min="1" max="10" value="3" id="speed">
+  </label>
+</div>
+
+<canvas id="mars"></canvas>
+
+<script>
+const canvas = document.getElementById("mars");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let angle = 0;
+let running = true;
+
+let rovers = [];
+
+const speedControl = document.getElementById("speed");
+
+function drawMars() {
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const radius = Math.min(canvas.width, canvas.height) * 0.2;
+
+  // glow
+  const gradient = ctx.createRadialGradient(centerX, centerY, 10, centerX, centerY, radius);
+  gradient.addColorStop(0, "#ff7a4a");
+  gradient.addColorStop(1, "#3a0f08");
+
+  ctx.beginPath();
+  ctx.fillStyle = gradient;
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // fake surface lines
+  ctx.strokeStyle = "rgba(0,0,0,0.2)";
+  for (let i = 0; i < 10; i++) {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius * (i / 10), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // rotation highlight
+  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, angle, angle + 1);
+  ctx.stroke();
+
+  // satellites orbiting
+  for (let i = 0; i < 5; i++) {
+    const satAngle = angle * (0.5 + i * 0.1);
+    const satX = centerX + Math.cos(satAngle) * (radius + 60 + i * 15);
+    const satY = centerY + Math.sin(satAngle) * (radius + 60 + i * 15);
+
+    ctx.fillStyle = "#cfd8dc";
+    ctx.fillRect(satX, satY, 4, 4);
+  }
+
+  // rovers
+  rovers.forEach(r => {
+    ctx.fillStyle = "#00ffcc";
+    ctx.beginPath();
+    ctx.arc(r.x, r.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "white";
+    ctx.font = "10px Arial";
+    ctx.fillText("Rover", r.x + 8, r.y);
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (running) {
+    angle += 0.002 * speedControl.value;
+  }
+
+  drawMars();
+  requestAnimationFrame(animate);
+}
+
+canvas.addEventListener("click", (e) => {
+  rovers.push({ x: e.clientX, y: e.clientY });
+});
+
+function toggleRotation() {
+  running = !running;
+}
+
+function clearRovers() {
+  rovers = [];
+}
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+animate();
+</script>
+
+</body>
+</html>
